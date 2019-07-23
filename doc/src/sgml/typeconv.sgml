@@ -354,33 +354,6 @@ Some examples follow.
 </para>
 
 <example>
-<title>Factorial Operator Type Resolution</title>
-
-<para>
-There is only one factorial operator (postfix <literal>!</literal>)
-defined in the standard catalog, and it takes an argument of type
-<type>bigint</type>.
-The scanner assigns an initial type of <type>integer</type> to the argument
-in this query expression:
-<screen>
-SELECT 40 ! AS "40 factorial";
-
-                   40 factorial
---------------------------------------------------
- 815915283247897734345611269596115894272000000000
-(1 row)
-</screen>
-
-So the parser does a type conversion on the operand and the query
-is equivalent to:
-
-<screen>
-SELECT CAST(40 AS bigint) ! AS "40 factorial";
-</screen>
-</para>
-</example>
-
-<example>
 <title>String Concatenation Operator Type Resolution</title>
 
 <para>

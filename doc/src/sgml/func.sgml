@@ -665,13 +665,6 @@
       </row>
 
       <row>
-       <entry> <literal>!</literal> </entry>
-       <entry>factorial</entry>
-       <entry><literal>5 !</literal></entry>
-       <entry><literal>120</literal></entry>
-      </row>
-
-      <row>
        <entry> <literal>!!</literal> </entry>
        <entry>factorial (prefix operator)</entry>
        <entry><literal>!! 5</literal></entry>

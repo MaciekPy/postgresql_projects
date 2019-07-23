@@ -121,16 +121,16 @@ DROP OPERATOR ~ (none, bit);
   </para>
 
   <para>
-   Remove the right unary factorial operator <literal>x!</literal>
+   Remove the left unary factorial operator <literal>!!x</literal>
    for type <type>bigint</type>:
 <programlisting>
-DROP OPERATOR ! (bigint, none);
+DROP OPERATOR !! (none, bigint);
 </programlisting></para>
 
   <para>
    Remove multiple operators in one command:
 <programlisting>
-DROP OPERATOR ~ (none, bit), ! (bigint, none);
+DROP OPERATOR ~ (none, bit), !! (none, bigint);
 </programlisting></para>
  </refsect1>
 

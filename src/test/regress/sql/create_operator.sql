@@ -22,16 +22,6 @@ CREATE OPERATOR @#@ (
    procedure = numeric_fac
 );
 
-CREATE OPERATOR #@# (
-   leftarg = int8,		-- right unary
-   procedure = numeric_fac
-);
-
-CREATE OPERATOR #%# (
-   leftarg = int8,		-- right unary
-   procedure = numeric_fac
-);
-
 -- Test operator created above
 SELECT point '(1,2)' <% widget '(0,0,3)' AS t,
        point '(1,2)' <% widget '(0,0,1)' AS f;
@@ -48,12 +38,6 @@ CREATE OPERATOR => (
 -- lexing of <=, >=, <>, != has a number of edge cases
 -- (=> is tested elsewhere)
 
--- this is legal because ! is not allowed in sql ops
-CREATE OPERATOR !=- (
-   leftarg = int8,		-- right unary
-   procedure = numeric_fac
-);
-SELECT 2 !=-;
 -- make sure lexer returns != as <> even in edge cases
 SELECT 2 !=/**/ 1, 2 !=/**/ 2;
 SELECT 2 !=-- comment to be removed by psql
