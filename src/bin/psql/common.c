@@ -762,15 +762,30 @@ static bool
 StoreQueryTuple(const PGresult *result)
 {
 	bool		success = true;
+	char	   *gset_suffix;
+
+	switch (pset.gset_target)
+	{
+		case GSET_TARGET_PSET:
+			gset_suffix = "";
+			break;
+		case GSET_TARGET_ENV:
+			gset_suffix = "env";
+			break;
+		default:
+			pg_log_error("How did you manage to get GSET_TARGET to be \"%d\"?", pset.gset_target);
+			return false;
+			break;
+	}
 
 	if (PQntuples(result) < 1)
 	{
-		pg_log_error("no rows returned for \\gset");
+		pg_log_error("no rows returned for \\gset%s", gset_suffix);
 		success = false;
 	}
 	else if (PQntuples(result) > 1)
 	{
-		pg_log_error("more than one row returned for \\gset");
+		pg_log_error("more than one row returned for \\gset%s", gset_suffix);
 		success = false;
 	}
 	else
@@ -786,13 +801,6 @@ StoreQueryTuple(const PGresult *result)
 			/* concatenate prefix and column name */
 			varname = psprintf("%s%s", pset.gset_prefix, colname);
 
-			if (VariableHasHook(pset.vars, varname))
-			{
-				pg_log_warning("attempt to \\gset into specially treated variable \"%s\" ignored",
-							   varname);
-				continue;
-			}
-
 			if (!PQgetisnull(result, 0, i))
 				value = PQgetvalue(result, 0, i);
 			else
@@ -801,14 +809,59 @@ StoreQueryTuple(const PGresult *result)
 				value = NULL;
 			}
 
-			if (!SetVariable(pset.vars, varname, value))
+			switch (pset.gset_target)
 			{
-				free(varname);
-				success = false;
-				break;
-			}
+				case GSET_TARGET_PSET:
 
-			free(varname);
+					if (VariableHasHook(pset.vars, varname))
+					{
+						pg_log_warning("attempt to \\gset into specially treated variable \"%s\" ignored",
+									   varname);
+						continue;
+					}
+
+					if (!SetVariable(pset.vars, varname, value))
+					{
+						free(varname);
+						success = false;
+						break;
+					}
+
+					free(varname);
+					break;
+				case GSET_TARGET_ENV:
+					if (strchr(varname, '=') != NULL)
+					{
+						free(varname);
+						success=false;
+						pg_log_error("in \\gsetenv, environment variable name must not contain \"=\"");
+					}
+					else if (!value)
+					{
+						/* NULL == unset the environment variable */
+						unsetenv(varname);
+						free(varname);
+					}
+					else
+					{
+						char *newval;
+
+						newval = psprintf("%s=%s", varname, value);
+						putenv(newval);
+						success=true;
+
+						/*
+						 * Do not free newval here, it will screw up the environment if
+						 * you do. See putenv man page for details. That means we leak a
+						 * bit of memory here, but not enough to worry about.
+						 */
+					}
+					break;
+				default:
+					success=false;
+					pg_log_error("How did you manage to get GSET_TARGET to be \"%d\"?", pset.gset_target);
+					break;
+			}
 		}
 	}
 
@@ -1124,7 +1177,7 @@ PrintQueryResults(PGresult *results)
 	{
 		case PGRES_TUPLES_OK:
 			/* store or execute or print the data ... */
-			if (pset.gset_prefix)
+			if (pset.gset_target != NULL)
 				success = StoreQueryTuple(results);
 			else if (pset.gexec_flag)
 				success = ExecQueryTuples(results);
@@ -1707,7 +1760,7 @@ ExecQueryUsingCursor(const char *query, double *elapsed_msec)
 			break;
 		}
 
-		if (pset.gset_prefix)
+		if (pset.gset_target != NULL)
 		{
 			/* StoreQueryTuple will complain if not exactly one row */
 			OK = StoreQueryTuple(results);

@@ -64,6 +64,13 @@ typedef enum
 
 typedef enum
 {
+	GSET_TARGET_NONE,
+	GSET_TARGET_PSET,
+	GSET_TARGET_ENV
+} GSET_TARGET;
+
+typedef enum
+{
 	hctl_none = 0,
 	hctl_ignorespace = 1,
 	hctl_ignoredups = 2,
@@ -142,6 +149,7 @@ typedef struct _psqlSettings
 	PSQL_ECHO_HIDDEN echo_hidden;
 	PSQL_ERROR_ROLLBACK on_error_rollback;
 	PSQL_COMP_CASE comp_case;
+	GSET_TARGET gset_target;	/* Where the \gset* command is going */
 	HistControl histcontrol;
 	const char *prompt1;
 	const char *prompt2;
